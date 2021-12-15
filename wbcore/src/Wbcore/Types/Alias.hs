@@ -32,7 +32,7 @@ type PeSize = 2 ^ SlotIndexBits
 
 type TokenOutWidth = 2 ^ TokenOutWidthBits
 
-newtype Busy = Busy {isBusy :: Bool}
+newtype Busy = Busy {isBusy :: Bool} deriving (Eq, Show, Generic, NFDataX, Lift, ShowX)
 
 isNotBusy :: Busy -> Bool
 isNotBusy = not . isBusy
