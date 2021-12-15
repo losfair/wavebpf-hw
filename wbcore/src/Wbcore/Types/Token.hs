@@ -13,7 +13,7 @@ data Token = Token
 
 data TokenBody = TokenBody
   { slotIndex :: SlotIndex,
-    operandIndex :: Unsigned 1,
+    operandMask :: Unsigned 2,
     operandValue :: DataWord,
     waveCounter :: WaveCounter
   }

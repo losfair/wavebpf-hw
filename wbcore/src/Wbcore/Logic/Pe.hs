@@ -26,7 +26,7 @@ data DispatchStrategy = DispatchStrategy
   { ds_outPortMask :: BitVector TokenOutWidth,
     ds_dispatchTag :: DispatchTag,
     ds_waveCounter :: WaveCounter,
-    ds_operandIndex :: Unsigned 1
+    ds_operandMask :: Unsigned 2
   }
   deriving (Show, Eq, Generic, NFDataX)
 
@@ -63,7 +63,7 @@ pe da ta instLoadBus memRsp = PeOutput {peMemReq = pure undefined, peTokenOut = 
     (peBusy_, tokenOut) = unbundle $ mealy (computeBusy $ executeToken da) EsIdle $ etiBundle ta instrCache memRsp
 
 dispatchDataWord :: DispatchStrategy -> DataWord -> TokenOut
-dispatchDataWord DispatchStrategy {ds_outPortMask = opm_, ds_dispatchTag = dt_, ds_operandIndex = oi_, ds_waveCounter = wc_} dw = out
+dispatchDataWord DispatchStrategy {ds_outPortMask = opm_, ds_dispatchTag = dt_, ds_operandMask = om_, ds_waveCounter = wc_} dw = out
   where
     seq_ = iterate (SNat :: SNat TokenOutWidth) (+ 1) (0 :: Int)
     idt_ = Wbcore.Types.DispatchTag.intraCluster dt_
@@ -76,7 +76,7 @@ dispatchDataWord DispatchStrategy {ds_outPortMask = opm_, ds_dispatchTag = dt_, 
                   ( Token
                       (Wbcore.Types.DispatchTag.clusterIndex dt_)
                       (Wbcore.Types.DispatchTag.peIndex idt_)
-                      (TokenBody (Wbcore.Types.DispatchTag.slotIndex idt_) oi_ dw wc_)
+                      (TokenBody (Wbcore.Types.DispatchTag.slotIndex idt_) om_ dw wc_)
                   )
               else Nothing
         )
