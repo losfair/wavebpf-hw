@@ -11,7 +11,7 @@ aggregate ::
   KnownNat m =>
   (a -> a -> Bool) ->
   (a -> Vec m Bool) ->
-  Signal dom (Vec (m + 1) (Vec (n + 1) (Maybe a))) ->
+  Signal dom (Vec (m + 1) (Vec (n + 1) (Maybe a)), Bool) ->
   Signal dom (Vec (m + 1) (Maybe (Index (n + 1))), Maybe (Vec (m + 1) a))
 aggregate eq satMask = fmap (pureAggregate eq satMask)
 
@@ -20,10 +20,10 @@ pureAggregate ::
   KnownNat m =>
   (a -> a -> Bool) ->
   (a -> Vec m Bool) ->
-  Vec (m + 1) (Vec (n + 1) (Maybe a)) ->
+  (Vec (m + 1) (Vec (n + 1) (Maybe a)), Bool) ->
   (Vec (m + 1) (Maybe (Index (n + 1))), Maybe (Vec (m + 1) a))
-pureAggregate eq satMask input =
-  (popSignals, outputValue)
+pureAggregate eq satMask (input, wannaPop) =
+  (if wannaPop then popSignals else repeat Nothing, outputValue)
   where
     -- For each element in the first queue, aggregate indices from all queues such that:
     -- - Each element at the to-be-aggregated index matches the first element's wave tag.

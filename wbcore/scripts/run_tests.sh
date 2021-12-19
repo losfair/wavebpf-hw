@@ -5,9 +5,12 @@ set -e
 run() {
 
 stack ghci --main-is wbcore:exe:clashi << EOF
-:load Wbcore.Tests.PriorityQueue
 System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PriorityQueue"
+:load Wbcore.Tests.PriorityQueue
 Wbcore.Tests.PriorityQueue.run
+System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PrePe"
+:load Wbcore.Tests.PrePe
+Wbcore.Tests.PrePe.run
 System.IO.hPutStrLn System.IO.stderr "All tests completed"
 EOF
 
