@@ -10,7 +10,9 @@ System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PriorityQueue"
 Wbcore.Tests.PriorityQueue.run
 System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PrePe"
 :load Wbcore.Tests.PrePe
-Wbcore.Tests.PrePe.run
+System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.Alu"
+:load Wbcore.Tests.Alu
+Wbcore.Tests.Alu.run
 System.IO.hPutStrLn System.IO.stderr "All tests completed"
 EOF
 

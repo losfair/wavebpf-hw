@@ -4,7 +4,7 @@ import Clash.Prelude
 import Wbcore.Types.Alias (Busy, busy, notBusy)
 
 data AluState = StIdle | StDelayOne AluOutput | StDelayTwo AluOutput
-  deriving (Show, Eq, Generic, NFDataX)
+  deriving (Show, Eq, Generic, NFDataX, Lift, ShowX)
 
 type AluWord = BitVector 32
 
@@ -18,24 +18,18 @@ type WaveCounterBits = 16
 
 type WaveCounter = BitVector WaveCounterBits
 
-data FullInsnAddr = FullInsnAddr
-  { fia_aluIndex :: Unsigned AluIndexBits,
-    fia_insnAddr :: Unsigned InsnMemSizeBits
-  }
-  deriving (Show, Eq, Generic, NFDataX)
-
 data AluToken = AluToken
-  { at_addr :: FullInsnAddr,
+  { at_addr :: Unsigned InsnMemSizeBits,
     at_wave :: WaveCounter,
     at_data :: AluWord
   }
-  deriving (Show, Eq, Generic, NFDataX)
+  deriving (Show, Eq, Generic, NFDataX, Lift, ShowX)
 
 data AluOutput = AluOutput
   { ao_token :: AluToken,
     ao_mask :: Vec (2 ^ AluIndexBits) Bool
   }
-  deriving (Show, Eq, Generic, NFDataX)
+  deriving (Show, Eq, Generic, NFDataX, Lift, ShowX)
 
 alu ::
   HiddenClockResetEnable dom =>
@@ -61,7 +55,7 @@ aluDecode' im (Just (i, insn), _) = (replace i insn im, (notBusy, Nothing))
 aluDecode' im (Nothing, Nothing) = (im, (notBusy, Nothing))
 aluDecode' im (Nothing, Just x) = (im, (if insnIsBlocking insn then busy else notBusy, Just (insn, x)))
   where
-    insn = im !! fia_insnAddr (at_addr (head x))
+    insn = im !! at_addr (head x)
 
 aluExec' ::
   AluState ->
@@ -71,6 +65,7 @@ aluExec' ::
 aluExec' StIdle Nothing = (StIdle, (Nothing, False))
 aluExec' StIdle (Just (insn, x)) =
   case slice d7 d0 insn of
+    0 -> (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_data = (0b0 :: BitVector 16) ++# slice d31 d16 insn}, ao_mask = insnOutputMask insn}, False))
     1 -> (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_data = at_data (head x) + at_data (x !! (1 :: Int))}, ao_mask = insnOutputMask insn}, False))
     2 ->
       ( StDelayOne
@@ -95,12 +90,8 @@ insnIsBlocking insn =
     3 -> True
     _ -> False
 
-insnNextAddr :: AluInsn -> FullInsnAddr
-insnNextAddr insn =
-  FullInsnAddr
-    { fia_aluIndex = unpack $ slice d63 d60 insn,
-      fia_insnAddr = unpack $ slice d59 d54 insn
-    }
+insnNextAddr :: AluInsn -> Unsigned InsnMemSizeBits
+insnNextAddr insn = unpack $ slice d59 d54 insn
 
 insnOutputMask :: AluInsn -> Vec (2 ^ AluIndexBits) Bool
 insnOutputMask insn = map (\x -> testBit insn (38 + fromIntegral x)) indicesI
