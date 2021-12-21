@@ -24,10 +24,7 @@ clusterMod = exposeClockResetEnable cluster
             PortName "ext_output"
           ],
         t_output =
-          PortProduct
-            ""
-            [ PortName "ext_input"
-            ]
+          PortName "ext_input"
       }
   )
   #-}

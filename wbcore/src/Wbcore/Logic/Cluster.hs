@@ -16,7 +16,7 @@ cluster ::
   Signal dom (Maybe (Unsigned AluIndexBits, Unsigned InsnMemSizeBits, AluInsn)) ->
   Signal dom (Maybe AluOutput) ->
   Signal dom (Maybe AluToken)
-cluster refill rawExtOutput = (\x -> head x !! (1 :: Int)) <$> head peInputs
+cluster refill rawExtOutput = (\x -> (x !! (0 :: Int)) !! (1 :: Int)) <$> (peInputs !! (0 :: Int)) -- XXX: Using `head` here causes Clash synthesis error
   where
     (extOutput, extOutBusy) = extOutputWrapper rawExtOutput
     refillMux =
