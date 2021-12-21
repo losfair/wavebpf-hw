@@ -79,6 +79,15 @@ library
   hs-source-dirs: src
   exposed-modules:
     Wbcore.Project
+    Wbcore.Gen.ClusterGen
+    Wbcore.Logic.Alu
+    Wbcore.Logic.Cluster
+    Wbcore.Logic.FlatQueue
+    Wbcore.Logic.FlatQueueAggregator
+    Wbcore.Logic.PostPe
+    Wbcore.Logic.PrePe
+    Wbcore.Logic.QueueArbiter
+    Wbcore.Types.Alias
   default-language: Haskell2010
 
 -- Builds the executable 'clash', with wbcore project in scope
