@@ -2,6 +2,7 @@ module Wbcore.Logic.Alu where
 
 import Clash.Prelude
 import Wbcore.Types.Alias (Busy, busy, notBusy)
+import Debug.Trace (trace)
 
 data AluState = StIdle | StDelayOne AluOutput | StDelayTwo AluOutput
   deriving (Show, Eq, Generic, NFDataX, Lift, ShowX)
@@ -53,7 +54,7 @@ aluDecode' ::
   Vec (2 ^ InsnMemSizeBits) AluInsn ->
   (Maybe (Unsigned InsnMemSizeBits, AluInsn), Maybe (Vec 2 AluToken)) ->
   (Vec (2 ^ InsnMemSizeBits) AluInsn, (Busy, Maybe (AluInsn, Vec 2 AluToken)))
-aluDecode' im (Just (i, insn), _) = (replace i insn im, (notBusy, Nothing))
+aluDecode' im (Just (i, insn), _) = (trace "alu load" $! replace i insn im, (notBusy, Nothing))
 aluDecode' im (Nothing, Nothing) = (im, (notBusy, Nothing))
 aluDecode' im (Nothing, Just x) = (im, (if insnIsBlocking insn then busy else notBusy, Just (insn, x)))
   where
@@ -100,3 +101,6 @@ insnNextAddr insn = unpack $ slice d59 d54 insn
 
 insnOutputMask :: AluInsn -> Vec (2 ^ PortIndexBits) Bool
 insnOutputMask insn = map (\x -> testBit insn (38 + fromIntegral x)) indicesI
+
+aluTokenEq :: AluToken -> AluToken -> Bool
+aluTokenEq a b = at_addr a == at_addr b && at_wave a == at_wave b
