@@ -8,11 +8,23 @@ stack ghci --main-is wbcore:exe:clashi << EOF
 System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PriorityQueue"
 :load Wbcore.Tests.PriorityQueue
 Wbcore.Tests.PriorityQueue.run
+
 System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.PrePe"
 :load Wbcore.Tests.PrePe
+Wbcore.Tests.PrePe.run
+
 System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.Alu"
 :load Wbcore.Tests.Alu
 Wbcore.Tests.Alu.run
+
+System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.Pe"
+:load Wbcore.Tests.Pe
+Wbcore.Tests.Pe.run
+
+System.IO.hPutStrLn System.IO.stderr "Test: Wbcore.Tests.Cluster"
+:load Wbcore.Tests.Cluster
+Wbcore.Tests.Cluster.run
+
 System.IO.hPutStrLn System.IO.stderr "All tests completed"
 EOF
 

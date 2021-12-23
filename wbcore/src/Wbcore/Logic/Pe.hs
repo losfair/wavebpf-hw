@@ -30,7 +30,8 @@ pe queueDepth aluFunc aluTokenEq aluTokenSatMask aoToToken aoToMask input backen
     -- input = (\x -> trace ("input " Prelude.++ show i Prelude.++ " " Prelude.++ show x) x) <$> input_
     (aq, frontendBusy) = tokenStream queueDepth aluTokenEq aluTokenSatMask input wannaPop
     -- aq = (\x -> trace ("aq " Prelude.++ show i Prelude.++ " " Prelude.++ show x) x) <$> aq_
-    (wannaPop, aluOut) = unbundle $ aluFunc refill aq
+    (wannaPopImmediately, aluOut) = unbundle $ aluFunc refill aq
+    wannaPop = register False wannaPopImmediately
     -- wannaPop = (\x -> trace ("wannaPop " Prelude.++ show i Prelude.++ " " Prelude.++ show x) x) <$> wannaPop_
     outData = fmap aoToToken <$> aluOut
     outMask = maybe (repeat False) aoToMask <$> aluOut

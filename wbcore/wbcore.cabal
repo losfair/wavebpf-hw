@@ -84,10 +84,12 @@ library
     Wbcore.Logic.Cluster
     Wbcore.Logic.FlatQueue
     Wbcore.Logic.FlatQueueAggregator
+    Wbcore.Logic.Pe
     Wbcore.Logic.PostPe
     Wbcore.Logic.PrePe
     Wbcore.Logic.QueueArbiter
     Wbcore.Types.Alias
+    Wbcore.Tests.Cluster
   default-language: Haskell2010
 
 -- Builds the executable 'clash', with wbcore project in scope

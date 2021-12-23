@@ -17,7 +17,7 @@ outputBuffer' ::
   Vec num_dests (Maybe a) ->
   (Vec num_dests Bool, (Maybe a, Vec num_dests Busy)) ->
   (Vec num_dests (Maybe a), (Vec num_dests (Maybe a), Busy))
-outputBuffer' st0 (outMask, (word, backendBusy)) = (st2, (st2, frontendBusy))
+outputBuffer' st0 (outMask, (word, backendBusy)) = (st2, (st0, frontendBusy))
   where
     -- First, check completions...
     st1 = zipWith (\a b -> if isBusy b then a else Nothing) st0 backendBusy
@@ -27,6 +27,6 @@ outputBuffer' st0 (outMask, (word, backendBusy)) = (st2, (st2, frontendBusy))
 
     -- Then, check if we have a new word to send...
     st2 =
-      if isBusy frontendBusy
+      if not $ isBusy frontendBusy
         then map (\x -> if x then word else Nothing) outMask
-        else st0
+        else st1

@@ -4,7 +4,7 @@ import Clash.Prelude
 import Wbcore.Logic.FlatQueue (flatQueue)
 import Wbcore.Logic.FlatQueueAggregator (aggregate)
 import Wbcore.Logic.QueueArbiter (queueArbiter)
-import Wbcore.Types.Alias (Busy)
+import Wbcore.Types.Alias (Busy, notBusy)
 
 tokenStream ::
   HiddenClockResetEnable dom =>
@@ -20,7 +20,7 @@ tokenStream ::
   (Signal dom (Maybe (Vec (n_operands + 1) operand_t)), Vec (n_operands + 1) (Vec (arbiter_width + 1) (Signal dom Busy)))
 tokenStream queueDepth tokenWaveEq tokenSatMask operands backendWannaPop = (aggregatedQueue, frontendBusy)
   where
-    arbitratedOperandsWithBusy = zipWith (queueArbiter . unbundle) (unbundle operands) busySig
+    arbitratedOperandsWithBusy = zipWith (queueArbiter . unbundle) (unbundle operands) (map (register notBusy) busySig)
     arbitratedOperands = map fst arbitratedOperandsWithBusy
     frontendBusy = map snd arbitratedOperandsWithBusy
     (queueViews, busySig) = unzip $ imap (\i x -> flatQueue queueDepth x (unbundledPopSignals !! i)) arbitratedOperands

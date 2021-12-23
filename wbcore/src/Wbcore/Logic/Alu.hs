@@ -1,8 +1,8 @@
 module Wbcore.Logic.Alu where
 
 import Clash.Prelude
-import Wbcore.Types.Alias (Busy, busy, notBusy)
 import Debug.Trace (trace)
+import Wbcore.Types.Alias (Busy, busy, notBusy)
 
 data AluState = StIdle | StDelayOne AluOutput | StDelayTwo AluOutput
   deriving (Show, Eq, Generic, NFDataX, Lift, ShowX)
@@ -14,6 +14,7 @@ type AluInsn = BitVector 64
 type InsnMemSizeBits = 6
 
 type AluIndexBits = 3
+
 type PortIndexBits = AluIndexBits + 1
 
 type WaveCounterBits = 16
@@ -68,8 +69,12 @@ aluExec' ::
 aluExec' StIdle Nothing = (StIdle, (Nothing, False))
 aluExec' StIdle (Just (insn, x)) =
   case slice d7 d0 insn of
-    0 -> (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = (0b0 :: BitVector 16) ++# slice d31 d16 insn}, ao_mask = insnOutputMask insn}, False))
-    1 -> (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = at_data (head x) + at_data (x !! (1 :: Int))}, ao_mask = insnOutputMask insn}, False))
+    0 ->
+      -- LoadConst
+      (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = (0b0 :: BitVector 16) ++# slice d31 d16 insn}, ao_mask = insnOutputMask insn}, False))
+    1 ->
+      -- Add
+      (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = at_data (head x) + at_data (x !! (1 :: Int))}, ao_mask = insnOutputMask insn}, False))
     2 ->
       ( StDelayOne
           ( AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = at_data (head x)}, ao_mask = insnOutputMask insn}
@@ -81,6 +86,26 @@ aluExec' StIdle (Just (insn, x)) =
           ( AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = at_data (head x)}, ao_mask = insnOutputMask insn}
           ),
         (Nothing, False)
+      )
+    4 ->
+      -- WaveAdv
+      (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x) + 1, at_satmask = insnNextSatMask insn, at_data = (0b0 :: BitVector 16) ++# slice d31 d16 insn}, ao_mask = insnOutputMask insn}, False))
+    5 ->
+      -- Fork
+      ( StIdle,
+        ( Just
+            AluOutput
+              { ao_token =
+                  AluToken
+                    { at_addr = if condCheck insn x then insnNextAddr insn else insnAltNextAddr insn,
+                      at_wave = at_wave (head x) + if insnShouldAdvanceWave insn then 1 else 0,
+                      at_satmask = insnNextSatMask insn,
+                      at_data = 0
+                    },
+                ao_mask = insnOutputMask insn
+              },
+          False
+        )
       )
     _ -> (StIdle, (Just AluOutput {ao_token = AluToken {at_addr = insnNextAddr insn, at_wave = at_wave (head x), at_satmask = insnNextSatMask insn, at_data = 0}, ao_mask = insnOutputMask insn}, False))
 aluExec' (StDelayOne x) _ = (StIdle, (Just x, True))
@@ -98,6 +123,29 @@ insnNextSatMask = slice d63 d63
 
 insnNextAddr :: AluInsn -> Unsigned InsnMemSizeBits
 insnNextAddr insn = unpack $ slice d59 d54 insn
+
+insnShouldAdvanceWave :: AluInsn -> Bool
+insnShouldAdvanceWave insn =
+  case slice d25 d25 insn of
+    1 -> True
+    _ -> False
+
+insnCondCode :: AluInsn -> BitVector 3
+insnCondCode = slice d24 d22
+
+condCheck :: AluInsn -> Vec 2 AluToken -> Bool
+condCheck insn (ll :> rr :> Nil) = case insnCondCode insn of
+  0b000 -> at_data ll == at_data rr
+  0b001 -> at_data ll < at_data rr
+  0b010 -> at_data ll <= at_data rr
+  0b011 -> at_data ll > at_data rr
+  0b100 -> at_data ll >= at_data rr
+  0b101 -> at_data ll /= at_data rr
+  0b110 -> at_data ll == 0b0
+  0b111 -> at_data ll /= 0b0
+
+insnAltNextAddr :: AluInsn -> Unsigned InsnMemSizeBits
+insnAltNextAddr insn = unpack $ slice d21 d16 insn
 
 insnOutputMask :: AluInsn -> Vec (2 ^ PortIndexBits) Bool
 insnOutputMask insn = map (\x -> testBit insn (38 + fromIntegral x)) indicesI

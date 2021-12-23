@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Wbcore.Logic.FlatQueueAggregator where
 
 import Clash.Prelude
